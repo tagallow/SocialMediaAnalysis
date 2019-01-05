@@ -1,9 +1,11 @@
-## Social Media Analysis
+# Social Media Analysis
+
 This project was used to collect social media posts from Twitter, Facebook, and Google Plus from a list of keywords. It also attempted to classify the posts as positive or negative, using a naïve Bayes classifier.
 
-Unfortunately there is no way to really run this service now because all the data was handled in Azure, and is now offline. Also the facebook and twitter APIs have changed significantly since this was written. 
+Unfortunately there is no way to really run this service now because all the data was handled in Azure, and is now offline. Also the facebook and twitter APIs have changed significantly since this was written.
 
-### Highlights
+## Highlights
+
 1. Controllers/SocialMonitorAPIController.cs
     * The primary API used to control the service.
 2. DatabaseAccessLayer.cs
@@ -17,4 +19,4 @@ Unfortunately there is no way to really run this service now because all the dat
 6. DataCollector.cs
     * The class that ran constantly to collect the social media data.
 7. Sources/*
-    * These are the classes used to interface with various social media platforms. This area required the most maintenance because Facebook and Twitter were constantly changing. 
+    * These are the classes used to interface with various social media platforms. This area required the most maintenance because Facebook and Twitter were constantly changing.
