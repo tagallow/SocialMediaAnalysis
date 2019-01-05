@@ -1,0 +1,222 @@
+﻿@using SocialMonitorCloud.Models;
+@model KeywordModel
+@{
+    
+    ViewBag.Title = "Detail";
+    if (!String.IsNullOrEmpty(ViewBag.Layout))
+    {
+        Layout = ViewBag.Layout;
+    }
+}
+
+<script src="~/Scripts/jquery-1.9.1.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script src="~/Scripts/api.js"></script>
+
+<script type="text/javascript">
+    api.socialMonitorCloudURL = '/api/socialmonitor?';
+    $(document).ready(function () {
+        drawchart('@Model.keyword', 'volumeChart');
+        Max();
+        //$('#pageControls').hide();
+    });
+    var currPage = 0;
+    var latestDate = '@DateTime.Today.ToShortDateString()';
+    function drawchart(keyword, divID) {
+        $('#tweets').html('');
+        if (liveInstance != undefined) {
+            clearInterval(liveInstance);
+            liveInstance = undefined;
+        }
+        api.drawChart_noflash(keyword, divID, 'moodChart');
+    }
+    var liveInstance = undefined;
+
+    function live2(keyword) {
+        if (liveInstance != undefined) {
+            clearInterval(liveInstance);
+            liveInstance = undefined;
+        }
+        $('#moodChart').hide()
+        $('#volumeChart').hide();
+        $('#tweets').html('');
+        var volChartData = new google.visualization.DataTable();
+        var volChart = new google.visualization.LineChart(document.getElementById('volumeChart'));
+        volChartData.addColumn('string', 'Time');
+        volChartData.addColumn('number', 'Volume');
+
+        var moodChart = new google.visualization.LineChart(document.getElementById('moodChart'));
+        var moodChartData = new google.visualization.DataTable();
+        moodChartData.addColumn('string', 'Time');
+        moodChartData.addColumn('number', 'Mood');
+
+        var interval = 10000;
+
+        function drawLiveCharts() {
+            var moodoptions = {
+                legend: { position: 'none' },
+                hAxis: { textPosition: 'none' },
+                vAxis: { textPosition: 'left', gridlines: { count: 2 }, title: "Mood", maxValue: 1, minValue: -1 },
+                chartArea: { left: 50, top: 10, width: "90%", height: "80%" },
+                animation: { duration: 1000, easing: 'linear' }
+            };
+            var volumeoptions = {
+                legend: { position: 'none' },
+                vAxis: { textPosition: 'left', gridlines: { count: 2 }, title: "Volume" },
+                hAxis: { textPosition: 'bottom' },
+                chartArea: { left: 50, top: 10, width: "90%", height: "80%" },
+                animation: { duration: 1000, easing: 'linear' }
+            };
+            moodChart.draw(moodChartData, moodoptions);
+            volChart.draw(volChartData, volumeoptions);
+        }
+        function addRow() {
+            var params = {
+                request: 'TIME_RANGE',
+                keyword: '@Model.keyword',
+                unit: '10sec'
+            };
+            var url = api.socialMonitorCloudURL + jQuery.param(params);
+            $.getJSON(url, '', function (data) {
+                keyword = data['keyword'];
+                //$(tweetDiv).html('')
+                var date = new Date().toLocaleTimeString();
+
+                if (data['sentimentList'].length > 0) {
+                    $('#tweets').hide("fade", "fast");
+                }
+                if (data['sentimentList'].length > 0) {
+                    volChartData.addRow([date, data['sentimentList'].length]);
+                    moodChartData.addRow([date, data['normalizedMood'][0]]);
+
+                    moodChartData.removeRow(0);
+                    volChartData.removeRow(0);
+
+                    $('#tweets').html('<hr style="height: 2px;background-color: #ccc">' + $('#tweets').html());
+                }
+                if (data['sentimentList'] != null) {
+                    for (var i = 0; i < data['sentimentList'].length; i++) {
+                        var text = data['sentimentList'][i]['text'];
+                        var author = data['sentimentList'][i]['author'];
+                        var datePosted = data['sentimentList'][i]['timeString'];
+                        var tweetID = data['sentimentList'][i]['twitterID'];
+                        var authorURL = 'https://twitter.com/' + author;
+                        var tweetURL = authorURL + '/status/' + tweetID;
+                        if (i != 0) {
+                            $('#tweets').html('<hr style="height: 2px;background-color: #ccc">' + $('#tweets').html());
+                        }
+
+                        $('#tweets').html('<b><a href="' + authorURL + '" target="_blank">' + author + '</a></b><br /><font color="grey">' + new Date().toLocaleTimeString() + '</font><br />' + text + '<br><br />' + $('#tweets').html());
+                        if (data["sentimentList"][i]['source'] != 'Unknown')
+                            $('#tweets').html('<img src="/images/social_media_icons/' + data["sentimentList"][i]['source'] + '.png" width="75" height="75" align="left">' + $('#tweets').html());
+                        //'#' + divID + 'TwitFeed'
+                    }
+                    if (data['sentimentList'].length > 0) {
+                        $('#tweets').show("fade", "slow");
+                    }
+                }
+                //drawLiveCharts();
+                //addRow();
+                //sinceID = data['lastTwitterIDString'];
+            });
+        }
+        liveInstance = setInterval(addRow, interval);
+        addRow();
+        //drawLiveCharts();
+    }
+    
+    function getRange(keyword, range, volDiv, moodDiv) {
+        $('#tweets').html('');
+        $('#pageControls').show();
+        if (liveInstance != undefined) {
+            clearInterval(liveInstance);
+            liveInstance = undefined;
+        }
+        api.getTimeRange(keyword, range, volDiv, moodDiv);
+    }
+    function nextPage() {
+        if (currPage == -1) {
+            latestDate = new Date();
+        }
+        currPage++;
+        getHistoryPage('@Model.keyword', latestDate.toLocaleString(), currPage);
+    }
+    function prevPage() {
+        if (currPage > 0) {
+            currPage--;
+            getHistoryPage('@Model.keyword', latestDate, currPage);
+        }
+    }
+    function getHistoryPage(keyword, date, page) {
+        if (page < 0) {
+            page = 0;
+        }
+        var params = {
+            request: 'PAGE',
+            keyword: keyword,
+            interval: page,
+            date: date
+        };
+        var url = api.socialMonitorCloudURL + jQuery.param(params);
+        $.get(url, '', function (data) {
+            keyword = data['keyword'];
+            $('#tweets').html('')
+            var date = new Date().toLocaleTimeString();
+
+            if (data['sentimentList'].length > 0) {
+                $('#tweets').hide("fade", "fast");
+                $('#tweets').html('<hr style="height: 2px;background-color: #ccc">' + $('#tweets').html());
+            }
+            if (data['sentimentList'] != null) {
+                for (var i = 0; i < data['sentimentList'].length; i++) {
+                    var text = data['sentimentList'][i]['text'];
+                    var author = data['sentimentList'][i]['author'];
+                    var datePosted = data['sentimentList'][i]['timeString'];
+                    var tweetID = data['sentimentList'][i]['twitterID'];
+                    var authorURL = 'https://twitter.com/' + author;
+                    var tweetURL = authorURL + '/status/' + tweetID;
+                    if (i != 0) {
+                        $('#tweets').html('<hr style="height: 2px;background-color: #ccc"><br>' + $('#tweets').html());
+                    }
+
+
+                    $('#tweets').html('<b><a href="' + authorURL + '" target="_blank">' + author + '</a></b><br /><font color="grey">' +data['sentimentList'][i]['timeString'] + '</font><br />' + text + '<br /><br/><br/>' + $('#tweets').html());
+                    if (data["sentimentList"][i]['source'] != 'Unknown')
+                        $('#tweets').html('<img src="/images/social_media_icons/' + data["sentimentList"][i]['source'] + '.png" width="75" height="75" align="left">' + $('#tweets').html());
+                    //'#' + divID + 'TwitFeed'
+                }
+                if (data['sentimentList'].length > 0) {
+                    $('#tweets').show("fade", "fast");
+                }
+            }
+        });
+    }
+    function Max() {
+        drawchart('@Model.keyword', 'volumeChart', 'moodChart');
+        currPage = -1;
+        nextPage();
+    }
+</script>
+
+<h1>@Model.keyword</h1><br />
+
+<div id="buttons" style="float:right">
+    <span class="button"><a onclick="live2('@Model.keyword')">Live</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','1week','volumeChart','moodChart')">1 Week</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','2week','volumeChart','moodChart')">2 Weeks</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','1month','volumeChart','moodChart')">1 Month</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','3month','volumeChart','moodChart')">3 Months</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','6month','volumeChart','moodChart')">6 Months</a></span>
+    <span class="button"><a onclick="getRange('@Model.keyword','1year','volumeChart','moodChart')">1 Year</a></span>
+    <span class="button"><a onclick="Max()">Max</a></span>
+    <span class="button"><a href="@Url.Action("Index")">Return</a></span>
+</div>
+
+<br><br>
+<div id='moodChart' style="width: 900px; height: 200px;display: block;margin-left: auto;margin-right: auto "></div>
+<div id="divider" style="width: 900px; display: block; margin-left: auto; margin-right: auto; "><hr /></div>
+<div id="volumeChart" style="width: 900px; height: 150px;display: block;margin-left: auto;margin-right: auto "></div>
+<br /><br />
+@*<div id="pageControls"><a onclick="prevPage()">Previous</a>|<a onclick="nextPage()">Next</a></div>*@
+<div id="tweets"></div>

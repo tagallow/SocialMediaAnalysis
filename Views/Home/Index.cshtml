@@ -1,0 +1,258 @@
+﻿@{
+    ViewBag.Title = "Welcome";
+    string UserID = (string)ViewBag.UserID;
+    Guid AccountID = Guid.Parse(UserID);
+    List<SocialMonitorCloud.Models.KeywordModel> keys = new List<SocialMonitorCloud.Models.KeywordModel>();
+    bool isActive = false;
+    try{
+        keys = SocialMonitorCloud.AccountManager.GetUserKeywords(AccountID);  //FIX
+        
+        isActive = SocialMonitorCloud.AccountManager.GetAccountInfo(AccountID).IsActive;  //FIX
+    }
+    catch{
+    }
+    
+    if(!String.IsNullOrEmpty(ViewBag.Layout))
+    {
+        Layout = ViewBag.Layout;
+    }
+}
+
+<header>
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script src="~/Scripts/api.js"></script>
+
+    @*@{
+        if(username.Equals("Administrator"))
+        {
+            <script type="text/javascript">
+            document.location.replace("Home/Admin");
+            </script>
+        }
+    }*@
+    
+    <script type="text/javascript">
+
+        api.socialMonitorCloudURL = '/api/socialmonitor?';
+        google.load('visualization', '1', { 'packages': ['annotatedtimeline','corechart'] });
+        
+        function addKeyword() {
+            var key = $('#newKeyWord').val();
+            api.addKeyword('@AccountID', key);
+
+        }
+        function live(keyword, divID) {
+            $('#newKeywordForm').html('');
+            //$('#keyword_list').html('<p>here</p>');
+            var content = '<tr><td>';
+            content += '<span style="float:left; font-weight:bold;font-size:large">' + keyword + '</span>';
+            content += '<span style="float:right" class="button"><a onclick="location.reload()">return</a></span><br><br>';
+            //content += '<span id="' + divID + 'mood" style="width: 1050px; height: 400px; float:left"></span>';
+            content += '<span id="' + divID + '"></span><br><br><br>';
+            content += '</td></tr>';
+            $('#keyword_list').html(content);
+            startLiveChart(keyword, divID);
+            //startTwitterFeed(keyword, divID);
+
+        }
+        function startLiveChart(keyword, divID) {
+            var sinceID = -1;
+            var volChartData = new google.visualization.DataTable();
+            var volChart = new google.visualization.LineChart(document.getElementById(divID));
+            volChartData.addColumn('string', 'Date');
+            volChartData.addColumn('number', 'Volume');
+
+            //var moodChart = new google.visualization.LineChart(document.getElementById(divID + 'mood'));
+            //var moodChartData = new google.visualization.DataTable();
+            //moodChartData.addColumn('string', 'Date');
+            //moodChartData.addColumn('number', 'Mood');
+            var interval = 5000;
+            var lastPass = new Date(new Date().getTime());
+            $("#tweets").show("fade", "slow");
+            function drawLiveCharts() {
+                var volumeOptions = {
+                    width: 850, height: 200,
+                    legend: {
+                        position: 'off'
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'linear'
+                    },
+                    vAxis: {
+                        maxValue: 10, minValue: 0,
+                        title: 'Volume'
+                    },
+                    chartArea: {
+                        left: 60,
+                        right: 0,
+                        top: 8,
+                        bottom: 9,
+                        width: 800,
+                        height: 175
+                    },
+                    hAxis: {
+
+                    }
+                };
+
+                volChart.draw(volChartData, volumeOptions);
+
+                //moodChart.draw(moodChartData, moodOption);
+            }
+
+            function addRow() {
+                var tweetDiv = '#tweets';
+                var data = api.getLiveDataRow(keyword, sinceID, function (data) {
+                    keyword = data['keyword'];
+                    //$(tweetDiv).html('')
+                    var date = new Date().toLocaleTimeString();
+                    
+                    if (data['sentimentList'].length > 0) {
+                        $(tweetDiv).hide("fade", "fast");
+                    }
+                    if (data['sentimentList'].length > 0) {
+                        volChartData.addRow([date, data['sentimentList'].length]);
+                        $(tweetDiv).html('<hr style="height: 2px;background-color: #ccc">' + $(tweetDiv).html());
+                    }
+                    for (var i = 0; i < data['sentimentList'].length; i++) {
+                        var text = data['sentimentList'][i]['text'];
+                        var author = data['sentimentList'][i]['author'];
+                        var datePosted = data['sentimentList'][i]['timeString'];
+                        var tweetID = data['sentimentList'][i]['twitterID'];
+                        var authorURL = location.protocol+'//twitter.com/' + author;
+                        var tweetURL = authorURL + '/status/' + tweetID;
+                        if (i != 0) {
+                            $(tweetDiv).html('<hr style="height: 2px;background-color: #ccc">' + $(tweetDiv).html());
+                        }
+                        $('#tweets').html('<b><a href="' + authorURL + '" target="_blank">' + author + '</a></b><br /><font color="grey">' + new Date(parseInt(data['sentimentList'][i]['timeString'])).toLocaleTimeString() + '</font><br />' + text + '<br />' + $('#tweets').html());
+                        //'#' + divID + 'TwitFeed'
+                    }
+                    if (data['sentimentList'].length > 0) {
+                        $(tweetDiv).show("fade", "slow");
+                    }
+                    //moodChartData.addRow([data['dates'][0], data['normalizedMood'][0]]);
+                    if (volChartData.getNumberOfRows() > 5) {
+                        volChartData.removeRow(0);
+                    }
+                    drawLiveCharts();
+                    //addRow();
+                    sinceID = data['lastTwitterIDString'];
+                });
+            }
+            setInterval(addRow, interval);
+            addRow();
+            
+        }
+        function detail(keywordID)
+        {
+            window.location.assign("")
+        }
+
+        /**
+         * Removes a keyword
+         */
+        function removeKeyword(userid, keyword, div) {
+            //api.removeKeyword(keyword);
+            div+='ROW';
+            $('#'+div).hide();
+        }
+        /**
+         * Draws all the charts
+         *
+         */
+        function drawAllCharts() {
+            @foreach (SocialMonitorCloud.Models.KeywordModel k in keys){
+                if (k.isActive || k.keyword.Equals("testData"))
+                {
+                    @:api.drawChart_noflash('@k.keyword','@k.chartDiv','@k.chartDiv+"mood"');
+                }
+            }
+        }
+        /**
+         * Performed at startup
+         */
+        $(document).ready(function () {
+            //initializeDates();
+
+            $("#tweets").hide("fade", "fast");
+            
+            //listKeywords();
+            //languageStatus();
+            
+            //drawChartTotals();
+        });
+        google.setOnLoadCallback(function () {
+            @if(isActive)
+            {
+                @:drawAllCharts();
+            }
+        });
+
+    </script>
+</header>
+
+<div id="body">
+    @if (isActive)
+    {
+        <div id="newKeywordForm">
+        <form action="" onsubmit="addKeyword(); return false;">
+            <input id="newKeyWord" type="text" placeholder="New Keyword" autofocus/>
+            @*<input id = "keywordButton" type="submit" value="Add Keyword" />*@
+            <span class="button"><a onclick="addKeyword()" title="Add Keyword">Add Keyword</a></span>
+        </form>
+        </div>
+    }
+    <table id="keyword_list">
+        @{
+            if (isActive)
+            {
+                if(keys.Count == 0)
+                {
+                    @:<tr><td><p>You have no keywords! Add one above to start collecting data.</p></td></tr>
+                }
+                foreach (SocialMonitorCloud.Models.KeywordModel k in keys)
+                {
+                    if (k.isActive || k.keyword.Equals("testData"))
+                    {
+                        var rowID = k.chartDiv + "ROW";
+                        <tr id ="@rowID">
+                        <td>
+                        <span style="float:left; font-weight:bold;font-size:large">@k.keyword</span>
+                        
+                        <span class="button" style="float:right">
+                        <a href="@Url.Action("Annotation", new { keyword = k.keyword, userID=UserID })">Annotate</a>
+                        
+                        <a href="@Url.Action("Detail", new { keywordID = k.ID })">Analyze</a>
+                        @*<a onclick="timeRange('30','@k.keyword','@k.chartDiv')">Month</a>*@
+                        @*<a onclick="live('@k.keyword','@k.chartDiv')">Live</a>*@
+                        <a onclick="api.removeKeyword('@AccountID.ToString()','@k.keyword')" title="Remove">X</a>
+                            
+                        </span>
+                        
+                        @*<span class="button" style="float:right" onclick="maximize('@k.keyword','@k.chartDiv')" title="Maximize Chart"><a>Max</a></span>*@
+                        
+                        <br /><br />
+                        <div id='@k.chartDiv+"mood"' style="width: 900px; height: 200px;display: block;margin-left: auto;margin-right: auto"></div>
+                            <hr style="width: 799px;margin-left:100px" />
+                        <div id='@k.chartDiv' style="width: 900px; height: 150px;display: block;margin-left: auto;margin-right: auto "></div>
+                        </td>
+                        
+                        </tr>
+                        <tr><td><p></p></td></tr>
+                        <tr><td><p></p></td></tr>
+                    }
+                }
+            }
+            else if (!isActive)
+            {
+                @:<p>This account appears to be disabled. Please contact your webmaster</p>
+            }
+        }
+    </table>
+    
+    <div id="tweets" style="height: 600px; border:0px solid grey; overflow:scroll"></div>
+</div>
+

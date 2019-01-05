@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+
+    <!-- This shouldn't be necessary -->
+    <script src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")" type="text/javascript"></script>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryui")
+    @Styles.Render("~/Content/Site.css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+    <header>
+        <div class="content-wrapper">
+            <div class="float-left">
+                <!--<p class="site-title">@Html.ActionLink("Logo", "Index", "Home")</p>-->
+                <!-- <img src="~/Images/\@User.Identity.Name/logo.png" /> -->
+            </div>
+            <div class="float-right">
+                <section id="login">
+                    @Html.Partial("_LoginPartial")
+                </section>
+                <nav>
+                    <ul id="menu">
+                        @if (@User.Identity.Name.Equals("Administrator"))
+                        {
+                            <li>@Html.ActionLink("Admin", "Admin", "Home")</li>
+                            <li>@Html.ActionLink("Charts", "Charts", "Home")</li>
+                        }
+                        else
+                        {
+                            <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                            <li>@Html.ActionLink("Profile", "Profile", "Home")</li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <div id="body">
+        @RenderSection("featured", required: false)
+        <section class="content-wrapper main-content clear-fix">
+            @RenderBody()
+        </section>
+    </div>
+    <footer>
+        <div class="content-wrapper">
+            <div class="float-left">
+                <p>&copy; @DateTime.Now.Year - Progressive Impressions International</p>
+            </div>
+        </div>
+    </footer>
+
+    @{
+        // Scripts.Render("~/bundles/jquery")   
+        //Scripts.Render("~/bundles/jqueryui")      
+    }
+
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,157 @@
+﻿@{
+    if (!String.IsNullOrEmpty(ViewBag.Layout))
+    {
+        Layout = ViewBag.Layout;
+    }
+    ViewBag.Title = "Annotation";
+    
+    string keyword = ViewBag.keyword;
+    
+}
+
+<header>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" />
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+    <script src="~/Scripts/jquery.form.js"></script>
+    <style type="text/css">
+        td {
+            padding-bottom: 10px;
+            padding-top: 10px;
+            padding-left: 5px;
+            padding-right: 5px;
+            
+            
+            /*border: 1px solid black;*/
+        }
+        tr:nth-child(odd)		{ 
+            background-color:#ddd; 
+
+        }
+        tr:nth-child(even)		{ 
+            background-color:#eee;
+
+        }
+        input,button {
+            display: inline-block;
+            padding: 4px 11px;
+            /*color: white;*/
+            /*background: #5C99C2;*/
+            border-radius: 8px;
+            min-width: 1%;
+            text-decoration: none;
+
+        }
+
+
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            $("#datepicker").datepicker();
+        });
+
+        function goback() {
+            @{
+                    if(!String.IsNullOrEmpty(User.Identity.Name))
+                    {
+                        @:window.location = '/Home/Index';
+                    }
+                    else
+                    {
+                        <text>
+                    var options = {
+                            UserID: '@ViewBag.userid',
+                            FirstName: 'null',
+                            LastName: 'null'
+                        };
+                        </text>
+                    }    
+                }
+        }
+        function submit2() {
+            var params = $('#insertAnnotation').serializeArray();
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            //alert(url);
+            $.post(url, '', function () {
+                location.reload();
+            });
+        }
+        function getAnnotations() {
+            $('#annotationList').html('');
+            var params = {
+                request: 'GET_ANNOTATIONS',
+                keyword: '@keyword'
+            }
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.getJSON(url, '', function (data) {
+                var annotationIDs = data['AnnotationIDs'];
+                var annotations = data['annotations'];
+                var annotationTitles = data['annotationTitles'];
+                var dates = data['dates'];
+                var table = $('<table>').appendTo('#annotationList');
+                
+                for (var i = 0; i < annotationIDs.length; i++) {
+                    var row = $('<tr>').appendTo(table);
+                    if (i == 0) {
+                        row.append('<td width="100" style="border-top-left-radius: 8px;"><b>' + dates[i] + '</b></td>')
+                    }
+                    else if (i == annotationIDs.length - 1) {
+                        row.append('<td width="100" style="border-bottom-left-radius: 8px;"><b>' + dates[i] + '</b></td>')
+                    }
+                    else {
+                        row.append('<td width="100"><b>' + dates[i] + '</b></td>')
+                    }
+                    row.append('<td width="200">' + annotationTitles[i] + '</td>')
+                    row.append('<td width="400"">' + annotations[i] + '</td>');
+                    var style = '';
+                    if (i == 0) {
+                        style = '\'border-top-right-radius: 8px;\'';
+                    }
+                    else if (i == annotationIDs.length - 1) {
+                        style = '\'border-bottom-right-radius: 8px;\'';
+                    }
+                    else {
+                        style = '';
+                    }
+                    row.append('<td style='+style+'><span class="button"><a onclick="deleteAnnotation('+annotationIDs[i]+')" title="remove">remove</a></span></td>');
+                }
+            });
+        }
+        function deleteAnnotation(id) {
+            var params = {
+                request: 'DELETE_ANNOTATION',
+                UserID: id,
+                keyword: '@keyword'
+            }
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                getAnnotations();
+            });
+        }
+        $(document).ready(function () {
+            getAnnotations();
+        });
+    </script>
+
+</header>
+
+<h2>New Annotation</h2><br />
+<span>Insert an annotation for </span><span style="font-weight: bold">@keyword</span><br /><br />
+
+<form id="insertAnnotation" onsubmit="submit2(); return false;" action="">
+    <input type="hidden" name="request" value="INSERT_ANNOTATION" hidden="hidden" />
+    <input type="hidden" name="keyword" value="@keyword" hidden="hidden" />
+    <label>Title:</label>
+    <input type="text" name="title" required="required" /><br />
+    <label>Caption:</label>
+    <input type="text" name="caption" required="required"/><br />
+    <label>Date:</label>
+    <input type="text" name="date" id="datepicker" required="required"/><br />
+    <input type="submit" value="Submit" style="color:white; background:#5C99C2; border: 0px solid black; font-weight: normal" />
+    @*<span class="button"><a onclick="submit2()" title="Submit">Submit</a></span>*@
+</form>
+<br />
+<h2>Existing Annotations</h2>
+<div id="annotationList"></div>
+<br />
+<span class="button"><a onclick="goback()" title="Done">Done</a></span>

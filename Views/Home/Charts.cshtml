@@ -1,0 +1,248 @@
+﻿@{
+    
+    ViewBag.Title = "Welcome";
+    bool isAdmin = User.Identity.Name.Equals("admin");
+    List<SocialMonitorCloud.Models.KeywordModel> keys = SocialMonitorCloud.ChartManager.getKeywords();
+
+    bool left = true;
+}
+@section featured {
+    <section class="featured">
+        <div class="content-wrapper">
+            <hgroup class="title">
+                <h1>Welcome, @User.Identity.Name</h1>
+                <h2></h2>
+            </hgroup>
+            <p>
+                Admin Chart Management
+            </p>
+        </div> 
+    </section>
+}
+<header>
+    
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" />
+    
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', { 'packages': ['annotatedtimeline'] });
+        
+        function drawChart(keyword,runAvg) {
+            var params = {
+                request: 'TOTAL',
+                keyword: keyword,
+                runningAvg: runAvg
+            };
+            $('#keyword').val(keyword);
+            var posCount = 0;
+            var negCount = 0;
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.getJSON(
+              url,
+              function (data) {
+                  
+                  var chartData = new google.visualization.DataTable();
+                  chartData.addColumn('date', 'Date');
+                  chartData.addColumn('number', 'Perception');
+                  chartData.addColumn('number', 'Volume');
+                  
+                  var mood = null;
+                  var vol = null;
+                  for (var i = 0; i < data['dates'].length; i++) {
+                      mood = data['normalizedMood'][i];
+                      volume = data['totalHits'][i];
+                      if (volume < 2) {
+                          if (volume == 0) {
+                              //mood = 5;
+                          }
+                          volume = null;
+                          mood = 0;
+                          continue;
+                      }
+                      chartData.addRow([new Date(data['dates'][i]), mood, volume]);
+                  }
+                  var options = {
+                      'displayAnnotations': false,
+                      'scaleColumns': [0],
+                      'scaleType': 'allmaximized',
+                      'min': -1,
+                      'max': 1,
+                      'colors':['blue','red']
+                  };
+                  var chart = new google.visualization.AnnotatedTimeLine(document.getElementById(data['keyword'] + ' volume'));
+                  chart.draw(chartData, options);
+              }
+            );
+        }
+        
+        /**
+         * Disables the entered keyword
+         */
+        function disableKey(){
+            var params = {
+               request: 'DISABLE_KEY',
+                keyword: $('#keyword').val(),
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                listKeywords();
+            });
+        }
+        function enableKey() {
+            var params = {
+                request: 'ENABLE_KEY',
+                keyword: $('#keyword').val(),
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                listKeywords();
+            });
+        }
+        /**
+         * Initializes the date forms
+         */
+        function initializeDates() {
+
+            $('#end_date').val('@DateTime.Today.ToShortDateString()');
+            $('#start_date').val('@DateTime.Today.AddDays(-30).ToShortDateString()');
+
+            //$('#end_date').val('2/5/2013');
+            //$('#start_date').val('1/25/2013');
+
+            //$('#keword').val('gun control');
+        }
+
+        function addKeyword() {
+            var key = $('#newKeyWord').val();
+
+            var params = {
+                request: 'ADD_KEYWORD',
+                userName: '@User.Identity.Name',
+                keyword: key,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                location.reload();
+            }); 
+        }
+        
+        /**
+         * Draws all the charts
+         *
+         */
+        function drawAllCharts() {
+            @foreach (SocialMonitorCloud.Models.KeywordModel k in keys){
+                @:drawChart('@k.keyword',1);   
+            }
+        }
+        /**
+         * Performed at startup
+         */
+        $(document).ready(function () {
+            
+            initializeDates();
+            drawAllCharts();
+            
+            //listKeywords();
+            //languageStatus();
+            
+            //drawChartTotals();
+        });
+
+    </script>
+
+     <script>
+         $(function () {
+             $("#start_date").datepicker();
+         });
+         $(function () {
+             $("#end_date").datepicker();
+         });
+
+         $(function () {
+             @foreach (SocialMonitorCloud.Models.KeywordModel k in keys){
+                 <text>$("#slider_@k.ID").slider({
+                     value: 2,
+                     min: 0,
+                     max: 5,
+                     step: 1,
+                     slide: function (event, ui) {
+                         var interval = 0;
+                         switch (ui.value) {
+                             case 0:
+                                 interval = 1;
+                                 break;
+                             case 1:
+                                 interval = 3;
+                                 break;
+                             case 2:
+                                 interval = 5;
+                                 break;
+                             case 3:
+                                 interval = 7;
+                                 break;
+                             case 4:
+                                 interval = 14;
+                                 break;
+                             case 5:
+                                 interval = 30;
+                                 break;
+
+                         }
+                         //$("#interval_@k.ID").val("$" + interval);
+                         var slider_div = $('#interval_@k.ID');
+                         slider_div.html(interval);
+                         drawChart('@k.keyword', interval);
+                     }
+                 });</text>
+             }
+             
+         });
+    </script>
+</header>
+
+<div id="body">
+    
+        <form action="" onsubmit="addKeyword(); return false;">
+            <input id="newKeyWord" type="text" placeholder="New Keyword" autofocus="true" />
+            <input id = "keywordButton" type="submit" value="Add Keyword" />
+        </form>
+
+    <table id="keyword_list">
+        @{      
+            foreach (SocialMonitorCloud.Models.KeywordModel k in keys)
+            {
+                if (left)
+                {
+                    @:<tr><td>
+                        @:<div><strong>@k.keyword</strong></div>
+                        @:<div id="@k.keyword volume" style='width: 500px; height: 240px;'></div></td>
+
+                          
+                    left = false;
+                }
+                else
+                {
+                    @:<td>
+                        @:<div><strong>@k.keyword</strong></div>
+                        @:<div id="@k.keyword volume" style='width: 500px; height: 240px;'></div>
+
+                        @:</td>
+                        @:</tr>
+                    left = true;
+                }
+            }
+            if(!left)
+            {
+             @:</tr>   
+            }
+        }
+    </table>
+
+
+    
+</div>
+

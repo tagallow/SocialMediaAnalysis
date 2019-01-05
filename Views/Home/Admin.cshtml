@@ -1,0 +1,307 @@
+﻿@{
+    ViewBag.Title = "Admin Settings";
+}
+
+<hgroup class="title">
+    <h1>ADMIN SETTINGS</h1>
+</hgroup>
+<header>
+    
+    <script type="text/javascript">
+        function disableKey(keyword, acctNum, acctName) {
+            var params = {
+                request: 'DISABLE_KEY',
+                keyword: keyword,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                getUserInfo(acctNum, acctName)
+            });
+
+        }
+        function enableKey(keyword, acctNum, acctName) {
+            var params = {
+                request: 'ENABLE_KEY',
+                keyword: keyword,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                getUserInfo(acctNum, acctName);
+            });
+
+        }
+        function toggleKeyword(key, isActive, acctNum, acctName) {
+            if (isActive == 'true') {
+                disableKey(key, acctNum, acctName);
+            }
+            else if (isActive == 'false') {
+                enableKey(key, acctNum, acctName);
+            }
+            //getUserInfo(acctNum, acctName);
+        }
+        function enableAcct(acctNum) {
+            var params = {
+                request: 'ENABLE_ACCOUNT',
+                keyword: acctNum,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                getUserInfo(acctNum);
+                //location.reload();
+                //alert(acctNum);
+            });
+        }
+        function disableAcct(acctNum) {
+            var params = {
+                request: 'DISABLE_ACCOUNT',
+                keyword: acctNum,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                getUserInfo(acctNum);
+            });
+        }
+        function submitEdit(acctName,acctNum) {
+            var params = {
+                request: 'UPDATE_ADDRESS',
+                userName: acctName,
+                companyName: $('#newCompanyName').val(),
+                phoneNumber: $('#newPhone').val(),
+                email: $('#newEmail').val(),
+                address1: $('#newAddr1').val(),
+                address2: $('#newAddr2').val(),
+                address3: $('#newAddr3').val(),
+                city: $('#newCity').val(),
+                state: $('#newState').val(),
+                zip: $('#newZip').val()
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                //alert('here');
+                getUserInfo(acctNum);
+            });
+        }
+        function editAcct(acctNum) {
+            var params = {
+                request: 'USER_INFO',
+                id: acctNum
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.get(url, '', function (data) {
+                var account = data['accounts'][0];
+                var acctName = account['FirstName'];
+                var companyName = account['companyName'];
+                var keywords = account['keywords'];
+                var phoneNum = account['phoneNumber'];
+                var email = account['email'];
+                var addr1 = account['address1'];
+                var addr2 = account['address2'];
+                var addr3 = account['address3'];
+                var city = account['city'];
+                var state = account['state'];
+                var zip = account['zip'];
+                var userInfo = "";
+                userInfo += '<h2>' + acctName + '</h2>';
+
+                if (account['IsActive']) {
+                    userInfo += '<font color="green">enabled</font>';
+                    userInfo += '   <button onclick="disableAcct(\'' + '' + '\')">Disable</button>';
+                }
+                else {
+                    userInfo += ('<font color="black">disabled</font>');
+                    userInfo += ('   <button onclick="enableAcct(\'' + '' + '\')">enable</button>');
+                }
+                userInfo += '   <form action="" onsubmit="submitEdit(\'' + acctName + '\',\'' + acctNum + '\'); return false;">'
+                userInfo += '<table>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Company Name: </td><td><input id="newCompanyName" required="required" type="text" value="' + companyName + '"/></td>');
+                userInfo += '</tr>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Phone Number: </td><td><input id="newPhone" required="required" type="text" value="' + phoneNum + '"/></td>');
+                userInfo += '</tr>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Email: </td><td><input id="newEmail" required="required" type="text" value="' + email + '"/></td>');
+                userInfo += '</tr>';
+                userInfo += '<tr valign="top">';
+                userInfo += ('<td>Address:</td><td>');
+                userInfo += '<input id="newAddr1" placeholder="Address Line 1" required="required" type="text" value="' + addr1 + '"/><br>'
+                userInfo += '<input id="newAddr2" placeholder="Address Line 2" type="text" value="' + addr2 + '"/><br>'
+                userInfo += '<input id="newAddr3" placeholder="Address Line 3" type="text" value="' + addr3 + '"/><br>'
+                userInfo += '<input id="newCity" placeholder="City" required="required" type="text" value="' + city + '"/><br>'
+                userInfo += '<input id="newState" type="text" required="required" maxlength="2" size="2" value="' + state + '"/><br>'
+                userInfo += '<input id="newZip" placeholder="Zip Code" required="required" type="text" value="' + zip + '"/><br>'
+                userInfo += '<input id="submit" type="submit" value="Save" /><br>';
+                userInfo += '</td></tr>';
+                userInfo += '</table></form>';
+                $('#acctInfo').html(userInfo);
+            });
+        }
+        function getUserInfo(acctNum) {
+            var params = {
+                request: 'USER_INFO',
+                id: acctNum
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.get(url, '', function (data) {
+                var account = data['accounts'][0];
+                var acctName = account['FirstName'];
+                var keywords = account['keywords'];
+                var phoneNum = account['phoneNumber'];
+                var companyName = account['companyName'];
+                var email = account['email'];
+                var addr1 = account['address1'];
+                var addr2 = account['address2'];
+                var addr3 = account['address3'];
+                var city = account['city'];
+                var state = account['state'];
+                var zip = account['zip'];
+                var userInfo = "";
+                //location.reload();
+                
+                userInfo += '<h2>' + acctName + '</h2>';
+
+                if (account['IsActive']) {
+                    userInfo += '<font color="green">enabled</font>';
+                    userInfo += '   <button onclick="disableAcct(\'' + acctNum + '\')">Disable</button>';
+                }
+                else {
+                    userInfo += ('<font color="black">disabled</font>');
+                    userInfo += ('   <button onclick="enableAcct(\'' + acctNum + '\')">enable</button>');
+                }
+                userInfo += '   <button onclick="editAcct(\'' + acctNum + '\')">Edit</button>'
+                userInfo += '<table>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Company Name: </td><td>' + companyName + '</td>');
+                userInfo += '</tr>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Phone Number: </td><td>' + phoneNum + '</td>');
+                userInfo += '</tr>';
+                userInfo += '<tr>';
+                userInfo += ('<td>Email: </td><td>' + email + '</td>');
+                userInfo += '</tr>';
+                userInfo += '<tr valign="top">';
+                userInfo += ('<td>Address:</td><td>');
+                
+                if (addr3.length > 0)
+                    userInfo += ('' + addr1 + '<br>' + addr2 + '<br>' + addr3 + '<br>' + city + ',' + state + '<br>' + zip + '');
+                else if (addr2.length > 0)
+                    userInfo += ('' + addr1 + '<br>' + addr2 + '<br>' + city + ',' + state + '<br>' + zip + '');
+                else if (addr1.length > 0) {
+                    userInfo += ('' + addr1 + '<br>' + city + ',' + state + '<br>' + zip + '');
+                }
+                else {
+
+                }
+                userInfo += '</td></tr>';
+                userInfo += '</table>';
+                $('#acctInfo').html(userInfo);
+
+                $('#keywordInfo').html('<table>');
+                $('#keywordInfo').append('<h3>Keywords</h3>');
+                for (var i = 0; i < keywords.length; i++) {
+                    var currKey = keywords[i]['keyword'];
+                    //currKey = currKey.replace(/\s/g, " ");
+                    var isActive = keywords[i]['isActive'];
+                    if (isActive) {
+                        isActive = '<font color="green">enabled</font>';
+                    }
+                    else {
+                        isActive = '<font color="black">disabled</font>';
+                    }
+                    var onClick = "toggleKeyword('" + currKey + "','" + keywords[i]['isActive'] + "','" + acctNum + "','" + acctName + "')";
+                    var button = "<td><button onClick=\"" + onClick + "\">toggle</button></td>";
+                    var appendData = '<tr><td>' + currKey + '</td><td>' + isActive + '</td>' + button + '</tr><tr>';
+                    $("#keywordInfo").append(appendData);
+                    //$(appendData).appendTo('#acctInfo');
+                }
+                $('#keywordInfo').append('</table>')
+                //alert(acctNum);
+            });
+        }
+        /**
+         * Toggles the status of language analysis
+         */
+        function toggleLanguage() {
+            var params = {
+                request: 'TOGGLE_LANGUAGE',
+                keyword: '',
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                languageStatus();
+            });
+        }
+        /**
+         * Displays the status of language analysis
+         */
+        function languageStatus() {
+            var params = {
+                request: 'LANGUAGE_STATUS',
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.getJSON(
+              url,
+              function (data) {
+                  var langStatusSpan = $('#langStatus');
+                  langStatusSpan.html('');
+                  if (data['languageStatus'])
+                      langStatusSpan.append('<font color="green">ENABLED</font>');
+                  else
+                      langStatusSpan.append('disabled');
+                  langStatusSpan.append(' [remaining: ' + data['viralHeatQueries'] + ']');
+              }
+            );
+        }
+        function addUser() {
+            var userName = prompt("User Name:");
+            var params = {
+                request: 'ADD_USER',
+                keyword: userName,
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.post(url, '', function () {
+                location.reload();
+            });
+
+        }
+        $(document).ready(function () {
+            $('#accountChooser').val(0);
+            //languageStatus();
+        });
+    </script>
+
+</header>
+<article>
+    <p>
+        
+    </p>
+
+    @*<h2>Users: </h2>*@
+@*    <div class="styled-select">
+            @{
+                @:<select id="accountChooser">
+                @:<option value="null">--Accounts--</option>
+                List<SocialMonitorCloud.Models.Account> Accounts = SocialMonitorCloud.AccountManager.GetAccounts();
+                foreach (SocialMonitorCloud.Models.Account account in Accounts)
+                {
+                    <option value="@account.FirstName" onclick="getUserInfo('@account.LocalAccountId.ToString()')">@account.FirstName</option>
+                }
+                @:</select>
+                <table>
+                <tr>
+                </tr>
+                </table>
+            }
+        </div>*@
+    <table>
+    <tr>
+        @*<td>Data Collection: </td><td>off</td>*@
+    </tr>
+    </table>
+</article>
+
+<aside>
+<div id="acctInfo"></div>
+<div id="keywordInfo"></div>
+    
+</aside>

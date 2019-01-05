@@ -1,0 +1,71 @@
+﻿@{
+    ViewBag.Title = "Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    string UserID = (string)ViewBag.UserID;
+    Guid AccountID = Guid.Parse(UserID);
+    SocialMonitorCloud.Models.Account account = SocialMonitorCloud.AccountManager.GetAccountInfo(AccountID);
+}
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+<script type="text/javascript">
+    function updateAddress(){
+        var params = {
+            request: 'UPDATE_ADDRESS',
+            userID: '@UserID',
+            companyName: $('#companyName').val(),
+            phoneNumber: $('#phoneNum').val(),
+            email: $('#email').val(),
+            address1: $('#addr1').val(),
+            address2: $('#addr2').val(),
+            address3: $('#addr3').val(),
+            city: $('#city').val(),
+            state: $('#state').val(),
+            zip: $('#zip').val()
+        };
+        var url = '/api/socialmonitor?' + jQuery.param(params);
+        $.post(url, '', function () {
+            $("#success").html("Account updated!")
+        });
+    }
+
+</script>
+<hgroup class="title">
+    
+    <h2>@ViewBag.Message</h2>
+</hgroup>
+
+<article>
+    <form action="" onsubmit="updateAddress(); return false;">
+        Company Name:<br />
+        <input id="companyName" type="text" placeholder="Company Name" required="required" value="@account.companyName" /><br />
+        Phone Number:<br />
+        <input id="phoneNum" type="text" placeholder="Phone Number" value="@account.phoneNumber" /><br />
+        Email:<br />
+        <input id="email" type="text" placeholder="Email" value="@account.email" /><br />
+        Address:<br />
+        <input id="addr1" type="text" placeholder="Address Line 1" value="@account.address1"/><br />
+        <input id="addr2" type="text" placeholder="Address Line 2" value="@account.address2" /><br />
+        <input id="addr3" type="text" placeholder="Address Line 3" value="@account.address3" /><br />
+        City:<br />
+        <input id="city" type="text" placeholder="City" value="@account.city" /><br />
+        State:<br />
+        <input id="state" type="text" placeholder="State" maxlength="2" size="2" value="@account.state" /><br />
+        Zip:<br />
+        <input id="zip" type="text" placeholder="Zip Code" value="@account.zip" /><br />
+        <input id="submit" type="submit" value="Save" />
+    </form>
+    <div id="success"></div>
+</article>
+
+<aside>
+    <h3></h3>
+    <p>
+        
+    </p>
+    <ul>
+        @*<li>@Html.ActionLink("Home", "Index", "Home")</li>*@
+        @*<li>@Html.ActionLink("About", "About", "Home")</li>*@
+        @*<li>@Html.ActionLink("Contact", "Contact", "Home")</li>*@
+    </ul>
+</aside>

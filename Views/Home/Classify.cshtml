@@ -1,0 +1,58 @@
+﻿@{
+    ViewBag.Title = "Sentiment Classification";
+}
+
+<hgroup class="title">
+    <h1>Sentiment Classification</h1>
+</hgroup>
+<header>
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript">
+    	function classify() {
+    		$('#result').html("thinking...");
+    		$('#viralHeat').html("");
+            var phrase = $('#classifyInput').val();
+            var params = {
+                request: 'CLASSIFY_SENTIMENT',
+                keyword: phrase
+            };
+            var url = '/api/socialmonitor?' + jQuery.param(params);
+            $.get(url, '', function (data) {
+                var result = data["ourSentiment"];
+                if (result == "Negative") {
+                    result = "<font color='red'>negative</font>";
+                }
+                else if (result == "Positive") {
+                    result = "<font color='green'>positive</font>";
+                }
+                else {
+                    $('#result').html("result");
+                    return;
+                }
+                $('#result').html("Results for: <font color='grey'>" + phrase + "</font><br><br>");
+                $('#result').append("Our API: " + result);
+
+
+            });
+        }
+        $(document).ready(function () {
+        	var params = {
+        		request: 'CLASSIFY_SENTIMENT',
+        		keyword: 'initialize'
+        	};
+        	var url = '/api/socialmonitor?' + jQuery.param(params);
+        	$.get(url, '', function (data) { });
+        });
+    </script>
+
+</header>
+    <h3>Enter a phrase to classify</h3>
+    
+    <form action="" onsubmit="classify(); return false;">
+            <input id="classifyInput" type="text" placeholder="Phrase" autofocus="true" style="width:600px" />
+            <span class="button"><a onclick="classify()" title="Classify">Classify</a></span>
+        </form>
+
+    <h3 id="result"></h3>
+    
+
