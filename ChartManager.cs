@@ -8,7 +8,6 @@ using System.Web;
 using System.Web.Http;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Newtonsoft.Json;
-//using SocialMonitorCloud.Controllers;
 using SocialMonitorCloud.Models;
 
 namespace SocialMonitorCloud
@@ -64,14 +63,8 @@ namespace SocialMonitorCloud
         }
         public static APIDataModel CollectAverages(string keyword, int interval)
         {
-            //int days = (end.DayOfYear - start.DayOfYear) + 1;
-            //interval;
-
             APIDataModel d = DatabaseAccessLayer.Instance.CollectRawData(keyword);
-
             DateTime end = DateTime.Today.AddDays(-1);
-            //interval = 5;
-            //List<double> normalizedMood = new List<double>();
             List<double> avg = new List<double>();
             List<int> volume = new List<int>();
             List<string> dates = new List<string>(d.dates);

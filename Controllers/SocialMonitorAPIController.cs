@@ -11,6 +11,8 @@ using SocialMonitorCloud.Sources;
 
 namespace SocialMonitorCloud.Controllers
 {
+    // An API used by other services to retrieve analytical social media data whih is
+    // then presented to the user using Google Charts.
     public class SocialMonitorController : ApiController
     {
         // GET api/values.
@@ -110,11 +112,6 @@ namespace SocialMonitorCloud.Controllers
             else if (request == "USER_LIST")
             {
                 data.accounts = AccountManager.GetAccounts().ToArray();
-            }
-            else if (request == "GET_CSV")
-            {
-                //TODO
-                //d = ChartManager.GetCSV(id);
             }
             else if (request == "CLASSIFY_SENTIMENT")
             {
@@ -235,11 +232,6 @@ namespace SocialMonitorCloud.Controllers
                 {
                     ChartManager.EnableKeyword(keyword);
                 }
-                else if (request == "TOGGLE_LANGUAGE")
-                {
-                    //TODO
-                    //ChartManager.toggleLanguageAnalysis();
-                }
                 else if (request == "DISABLE_ACCOUNT")
                 {
                     AccountManager.DisableAccount(Guid.Parse(keyword));
@@ -247,10 +239,6 @@ namespace SocialMonitorCloud.Controllers
                 else if (request == "ENABLE_ACCOUNT")
                 {
                     AccountManager.EnableAccount(Guid.Parse(keyword));
-                }
-                else if (request == "ADD_USER")
-                {
-                    //AccountManager.CreateAccount(Guid.NewGuid(), keyword);
                 }
             }
         }
